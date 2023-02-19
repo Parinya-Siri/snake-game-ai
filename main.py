@@ -1,5 +1,6 @@
 import pygame
 import random
+import asyncio
 
 # Define some colors
 BLACK = (0, 0, 0)
@@ -51,7 +52,7 @@ def display_score(score):
     screen.blit(score_text, [0, 0])
 
 # Define the main game loop
-def gameLoop():
+async def gameLoop():
     global direction
     global snake_position
     global snake_body
@@ -99,7 +100,7 @@ def gameLoop():
         snake_head.append(snake_position[0])
         snake_head.append(snake_position[1])
         snake_body.insert(0, snake_head)
-        print(snake_body)
+        # print(snake_body)
         # Check if the snake has eaten the food
         if snake_position == food_position:
             food_position = [random.randint(0, grid_width-1) * grid_size,
@@ -126,7 +127,9 @@ def gameLoop():
         
         # Set the speed of the game
         clock.tick(10)
+        
+        await asyncio.sleep(0)
 
 # Quit Pygame
-gameLoop()
+asyncio.run(gameLoop())
 pygame.quit()
