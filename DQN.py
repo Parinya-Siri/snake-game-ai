@@ -81,7 +81,7 @@ class DQN(nn.Module):
 class GameEnv:
     def __init__(self):
         self.game = game()
-        self.state_size = 8
+        self.state_size = 9
         self.action_space = 4
 
     def reset(self):
@@ -89,38 +89,21 @@ class GameEnv:
         return self.get_state()
 
     def get_state(self):
-        head, body, food, direction, border = self.game.call()
-        state = np.zeros(self.state_size)
-        if head[0]-food[0]>0:
-            state[0] = 1
-        if head[0]-food[0]<0:
-            state[1] = 1
-        if head[1]-food[1]>0:
-            state[2] = 1
-        if head[1]-food[1]<0:
-            state[3] = 1
-        if [head[0]-1,head[1]] in body or head[0]-1 < 0:
-            state[4] = 1
-        if [head[0]+1,head[1]] in body or head[0]+1 >= border:
-            state[5] = 1
-        if [head[0],head[1]-1] in body or head[1]-1 <0:
-            state[6] = 1
-        if [head[0],head[1]+1]  in body or head[1]+1 >= border:
-            state[7] = 1
-        return state
+        return self.game.get_state()
 
     def step(self, action):
         self.game.move(action)
-        if not self.game.is_done():
-            state = self.get_state()
-        state = np.zeros(self.state_size)
+        # if not self.game.is_done():
+        #     state = self.get_state()
+        # state = np.zeros(self.state_size)
+        state = self.get_state()
         reward = self.game.get_reward()
         done = self.game.is_done()
         return state, reward, done
 
 env = GameEnv()
 agent = DQNAgent(env.state_size, env.action_space, 
-                 learning_rate = 0.01, 
+                 learning_rate = 0.001, 
                  discount_rate = 0.95, 
                  exploration_rate = 1.0, 
                  exploration_decay = 0.995, 
@@ -128,25 +111,37 @@ agent = DQNAgent(env.state_size, env.action_space,
 
 num_episodes = 10000
 batch_size = 32
-
+best_score = 0
+max_step = 20
 for episode in tqdm(range(num_episodes)):
     state = env.reset()
     done = False
     steps = 0
     total_reward = 0
     dead = 0
+    step_count = 0
     while not done:
+        step_count += 1
         action = agent.choose_action(state)
         next_state, reward, done = env.step(action)
         agent.remember(state, action, reward, next_state, done)
         total_reward += reward
         if reward == 1:
-            print('head: ', env.game.head, 'food: ', env.game.food ,'total: ',total_reward, 'episode: ',episode)
-            dead = 1
+            step_count = 0
+        # if reward == 1:
+        #     print('head: ', env.game.head, 'food: ', env.game.food ,'total: ',total_reward, 'episode: ',episode)
+        #     dead = 1
         state = next_state
         agent.learn()
-    if dead == 1:
-        print('total: ',total_reward)
+    if step_count >= max_step:
+        done = True
+    # if dead == 1:
+    #     print('total: ',total_reward)
+    if total_reward > best_score:
+        agent.save_model("dqn_model_{}.pth".format(episode+1))
+        best_score = total_reward
+        print("new better snake! at score : ", total_reward)
+        print("model saved")
     if (episode+1) % 100 == 0:
         print("Episode: {:4d}, Score: {:4d}, Epsilon: {:.4f}".format(episode+1, total_reward, agent.exploration_rate))
     if (episode+1) % 500 == 0:

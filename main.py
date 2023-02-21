@@ -1,7 +1,13 @@
 import pygame
 import random
 import asyncio
+from game import game
+import numpy as np
 
+ai = False
+
+#import game
+g = game()
 # Define some colors
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -9,8 +15,8 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 
 # Set the dimensions of the screen
-screen_width = 800
-screen_height = 600
+screen_width = 20*g.border
+screen_height = 20*g.border
 
 # Define the size of the grid squares and the number of grid squares
 grid_size = 20
@@ -42,70 +48,71 @@ def display_high_score(high_score):
 def display_game_over(score,high_score):
     game_over_text = font.render("GAME OVER : Your score is :" + str(score), True, WHITE)
     screen.blit(game_over_text, [200, 200])    
-
 # Define Reset state
-def reset():
-    # Define the starting position of the snake
-    snake_position = [100, 40]
-    snake_body = [[100, 40], [80, 40], [60, 40]]
-    # Define the starting position of the food
-    food_position = [random.randint(0, grid_width-1) * grid_size,
-                     random.randint(0, grid_height-1) * grid_size]
-    # Define the starting score
+def reset(g):
+    g = game()
     score = 0
+    direction = 1
     new_high_score = 0
-    # Define the direction of the snake
-    direction = "RIGHT"
-    return snake_position,snake_body,food_position,score,direction,new_high_score
-    
-# Create game over screen
-    # play_again_button = pygame.Rect(screen_width/2 - 75, screen_height/2 + 50, 150, 50)
-    # pygame.draw.rect(game_over_screen, (0, 255, 0), play_again_button)    
+    return g.head,g.body,g.food,score,direction,new_high_score
+
+# class DQN(nn.Module):
+#     def __init__(self, state_size, action_size):
+#         super(DQN, self).__init__()
+#         self.fc1 = nn.Linear(state_size, 128)
+#         self.fc2 = nn.Linear(128, 64)
+#         self.fc3 = nn.Linear(64, action_size)
+
+#     def forward(self, x):
+#         x = F.relu(self.fc1(x))
+#         x = F.relu(self.fc2(x))
+#         x = self.fc3(x)
+#         return x
+
+# if ai == True:
+# ######################  Model path here #############################
+#     agent = DQN(9,4)
+#     agent.load_state_dict(torch.load('dqn_model_230.pth'))
 
 # Define the main game loop
-async def gameLoop():
+async def gameLoop(g):
     high_score = 0
     new_high_score = 0
-    snake_position,snake_body,food_position,score,direction,new_high_score = reset()    
-    game = False
+    snake_position,snake_body,food_position,score,direction,new_high_score = reset(g)    
+    playing = True
     game_over = False
-    while not game:
-        # Set the event listeners
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                game_over = True
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    if direction != "RIGHT":
-                        direction = "LEFT"
-                elif event.key == pygame.K_RIGHT:
-                    if direction != "LEFT":
-                        direction = "RIGHT"
-                elif event.key == pygame.K_UP:
-                    if direction != "DOWN":
-                        direction = "UP"
-                elif event.key == pygame.K_DOWN:
-                    if direction != "UP":
-                        direction = "DOWN"
+    print('heeeeel')
+    while playing:
+        # AI ACTION
+        if ai == True:
+        #     q_values = agent(torch.FloatTensor(g.get_state()))
+        #     direction = torch.argmax(q_values).item()
+        # # Set the event listeners
+            pass
+        else:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    game_over = True
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        if direction != 3:
+                            direction = 2
+                    elif event.key == pygame.K_RIGHT:
+                        if direction != 2:
+                            direction = 3
+                    elif event.key == pygame.K_UP:
+                        if direction != 1:
+                            direction = 0
+                    elif event.key == pygame.K_DOWN:
+                        if direction != 0:
+                            direction = 1
         
         # Update the position of the snake
-        if direction == "RIGHT":
-            snake_position[0] += grid_size
-        elif direction == "LEFT":
-            snake_position[0] -= grid_size
-        elif direction == "UP":
-            snake_position[1] -= grid_size
-        elif direction == "DOWN":
-            snake_position[1] += grid_size
+        print('heeeeel')
+        g.move(direction)
         
         # Check if the snake has collided with the walls
-        if snake_position[0] >= screen_width or snake_position[0] < 0 or snake_position[1] >= screen_height or snake_position[1] < 0:
-            game_over = True
-        
-        # Check if the snake has collided with itself
-        for block in snake_body[1:]:
-            if snake_position == block:
-                game_over = True
+        game_over = g.done
         
         # Add the position of the snake to the snake body
         snake_head = []
@@ -114,22 +121,18 @@ async def gameLoop():
         snake_body.insert(0, snake_head)
         
         # Check if the snake has eaten the food
-        if snake_position == food_position:
-            food_position = [random.randint(0, grid_width-1) * grid_size,
-                             random.randint(0, grid_height-1) * grid_size]
+        if g.reward == 1:
             score += 10
-        else:
-            snake_body.pop()
 
         # Set the background color of the screen
         screen.fill(BLACK)
         
         # Draw the food
-        pygame.draw.rect(screen, GREEN, [food_position[0], food_position[1], grid_size, grid_size])
+        pygame.draw.rect(screen, GREEN, [g.food[0]*20, g.food[1]*20, grid_size, grid_size])
         
         # Draw the snake
-        for block in snake_body:
-            pygame.draw.rect(screen, WHITE, [block[0], block[1], grid_size, grid_size])
+        for block in g.body:
+            pygame.draw.rect(screen, WHITE, [block[0]*20, block[1]*20, grid_size, grid_size])
         
         # Display the score
         display_score(score)
@@ -152,6 +155,7 @@ async def gameLoop():
             game_over_text = font.render("GAME OVER", True, RED)
             if new_high_score == 1:
                 score_text = font.render("NEW HIGH SCORE! :" + str(score),True,WHITE)
+                new_high_score = 0
             else:
                 score_text = font.render("Youre score is :" + str(score),True,WHITE)
             press_text = font.render("Press any key to replay", True, WHITE)
@@ -168,11 +172,13 @@ async def gameLoop():
                         pause = False
                 clock.tick(3)
             # Reset the game state
-            snake_position,snake_body,food_position,score,direction,new_high_score = reset()  
+            g = game()
+            direction = 1
+            score = 0
             game_over = False
 
 
 # Quit Pygame
-asyncio.run(gameLoop())
+asyncio.run(gameLoop(g))
 
 # pygame.quit()

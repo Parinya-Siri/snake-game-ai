@@ -2,7 +2,14 @@ import pygame
 import random
 import asyncio
 from game import*
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
+# AI here
+ai = True
+
+#import game
 g = game()
 # Define some colors
 BLACK = (0, 0, 0)
@@ -51,10 +58,24 @@ def reset(g):
     direction = 1
     new_high_score = 0
     return g.head,g.body,g.food,score,direction,new_high_score
-    
-# Create game over screen
-    # play_again_button = pygame.Rect(screen_width/2 - 75, screen_height/2 + 50, 150, 50)
-    # pygame.draw.rect(game_over_screen, (0, 255, 0), play_again_button)    
+
+class DQN(nn.Module):
+    def __init__(self, state_size, action_size):
+        super(DQN, self).__init__()
+        self.fc1 = nn.Linear(state_size, 128)
+        self.fc2 = nn.Linear(128, 64)
+        self.fc3 = nn.Linear(64, action_size)
+
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+
+if ai == True:
+######################  Model path here #############################
+    agent = DQN(9,4)
+    agent.load_state_dict(torch.load('dqn_model_230.pth'))
 
 # Define the main game loop
 async def gameLoop(g):
@@ -64,23 +85,28 @@ async def gameLoop(g):
     playing = True
     game_over = False
     while playing:
+        # AI ACTION
+        if ai == True:
+            q_values = agent(torch.FloatTensor(g.get_state()))
+            direction = torch.argmax(q_values).item()
         # Set the event listeners
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                game_over = True
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    if direction != 3:
-                        direction = 2
-                elif event.key == pygame.K_RIGHT:
-                    if direction != 2:
-                        direction = 3
-                elif event.key == pygame.K_UP:
-                    if direction != 1:
-                        direction = 0
-                elif event.key == pygame.K_DOWN:
-                    if direction != 0:
-                        direction = 1
+        else:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    game_over = True
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        if direction != 3:
+                            direction = 2
+                    elif event.key == pygame.K_RIGHT:
+                        if direction != 2:
+                            direction = 3
+                    elif event.key == pygame.K_UP:
+                        if direction != 1:
+                            direction = 0
+                    elif event.key == pygame.K_DOWN:
+                        if direction != 0:
+                            direction = 1
         
         # Update the position of the snake
         g.move(direction)
@@ -146,6 +172,7 @@ async def gameLoop(g):
                 clock.tick(3)
             # Reset the game state
             g = game()
+            direction = 1
             score = 0
             game_over = False
 
