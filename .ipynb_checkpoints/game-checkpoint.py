@@ -9,7 +9,7 @@ def random_food(body,border,head):
             food = [x,y]
             return food
 class game:
-    def __init__(self,head = (1,4), body=((1,2),(1,3),(1,4)), food = (5,5), direction=1, border = 20):
+    def __init__(self,head = (1,4), body=((1,2),(1,3),(1,4)), food = (5,5), direction=1, border = 25):
         self.head = list(head)
         self.body = [list(pos) for pos in body]
         self.direction = int(direction)
@@ -17,7 +17,7 @@ class game:
         self.done = False
         self.reward = 0
         self.food = random_food(self.body,self.border,self.head)
-        self.state_size = 9
+        self.state_size = 8
     
     def snake_growth(self):
         if self.head != self.food:
@@ -93,5 +93,5 @@ class game:
             state[6] = 1
         if [head[0]+1,head[1]] in body or head[0]+1 >= border:
             state[7] = 1
-        state[8] = np.absolute(head[0]-food[0])+np.absolute(head[1]-food[1])
+        # state[8] = np.absolute(head[0]-food[0])+np.absolute(head[1]-food[1])
         return state
