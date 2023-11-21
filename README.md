@@ -1,8 +1,4 @@
-# snake-game-ai
-Let my AI play the snake game for you!
-try it yourself!
-https://parinya-siri.github.io/snake-game-ai/build/web
-#Snake Game AI using Deep Q-Learning
+# Snake Game AI using Deep Q-Learning
 ## Overview
 This project presents an AI-powered version of the classic Snake game, developed using the Pygame library and enhanced with Deep Q-Learning techniques. The AI agent, trained with PyTorch, navigates the game with adjustable parameters, showcasing an innovative approach to an NP-hard problem.
 
