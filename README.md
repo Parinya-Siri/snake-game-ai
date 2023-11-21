@@ -30,7 +30,7 @@ PyTorch
 Numpy
 
 ## Usage
-Run DQL.py to train the model. The Q-learning parameters and game settings like board size and snake sensors can be adjusted in game.py.
+Adjust the Q-learning parameters and train the model using DQL.py. The game settings like board size and snake sensors can be adjusted in game.py.
 
 ## Future Enhancements
 Expanding the snake's sensory inputs to include all grid statuses within a 3-block radius.
